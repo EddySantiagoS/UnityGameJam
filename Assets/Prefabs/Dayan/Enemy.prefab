@@ -129,3 +129,7 @@ MonoBehaviour:
   fireRate: 1
   projectileSpeed: 10
   rotationSpeed: 5
+  shootingRange: 20
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 256

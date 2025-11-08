@@ -4,27 +4,30 @@ public class EnemyShooterDayan : MonoBehaviour
 {
     [Header("Referencias")]
     public GameObject projectilePrefab;
-
-    [Tooltip("El objetivo al que el enemigo apuntará (El Jugador)")]
-    public Transform playerTarget; // Arrastra al jugador aquí
+    public Transform playerTarget;
 
     [Header("Estadísticas de Disparo")]
     public float fireRate = 1f;
     public float projectileSpeed = 10f;
 
     [Header("IA de Apuntado")]
-    [Tooltip("Qué tan rápido el enemigo rota para apuntar al jugador")]
     public float rotationSpeed = 5f;
+
+    // --- ¡NUEVAS VARIABLES! ---
+    [Header("IA de Detección")]
+    [Tooltip("Distancia máxima a la que el enemigo te detectará y disparará")]
+    public float shootingRange = 20f;
+
+    [Tooltip("La capa que contiene tus muros (para el Raycast)")]
+    public LayerMask obstacleLayerMask;
+    // --- ---
 
     private float timer;
 
-    // --- NUEVO: Intentar encontrar al jugador si no está asignado ---
     void Start()
     {
         if (playerTarget == null)
         {
-            // Intenta encontrar al jugador por el tag. 
-            // Esto es útil para la futura generación procedural.
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
             {
@@ -35,27 +38,66 @@ public class EnemyShooterDayan : MonoBehaviour
 
     void Update()
     {
-        // Si el tiempo está detenido, no hacer absolutamente NADA
+        // Si el tiempo está detenido (o muy lento), no hacer nada
         if (Time.timeScale == 0) return;
 
-        // --- NUEVO: Lógica de Rotación ---
-        if (playerTarget != null)
+        if (playerTarget == null) return;
+
+        // --- ¡LÓGICA DE IA ACTUALIZADA! ---
+
+        // --- INICIO DE LA MODIFICACIÓN (Pecho a Pecho) ---
+
+        // 1. Definir los puntos de origen y destino del rayo (más robusto)
+        // Asumimos que "pecho" está 0.5m por encima del pivote
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.5f;
+        Vector3 targetChest = playerTarget.position + Vector3.up * 0.5f;
+
+        // 2. Calcular la distancia y dirección REALES del rayo
+        float distanceToPlayer = Vector3.Distance(rayOrigin, targetChest);
+        Vector3 directionToPlayer = (targetChest - rayOrigin).normalized;
+
+        // --- FIN DE LA MODIFICACIÓN ---
+
+
+        // 3. COMPROBACIÓN DE RANGO
+        if (distanceToPlayer > shootingRange)
         {
-            // 1. Calcular la dirección hacia el jugador (solo en el plano XZ)
-            Vector3 directionToPlayer = playerTarget.position - transform.position;
-            directionToPlayer.y = 0; // Ignora la altura
-
-            // 2. Calcular la rotación deseada
-            Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
-
-            // 3. Aplicar la rotación suavemente
-            // La clave está en "Time.deltaTime":
-            // Cuando Time.timeScale es 0, Time.deltaTime también es 0.
-            // Esto detiene la rotación Slerp automáticamente.
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+            // El jugador está muy lejos. No hacer NADA (ni rotar, ni disparar).
+            return;
         }
 
-        // --- Lógica de Disparo (Sin cambios) ---
+        // --- AÑADIR ESTA LÍNEA PARA DEPURACIÓN ---
+        // Dibuja el rayo en la vista de Escena (¡muy útil!)
+        // Verde si está en rango, Rojo si choca con algo
+        Color rayColor = Color.green;
+        // --- ---
+
+        // 4. COMPROBACIÓN DE LÍNEA DE VISIÓN (LOS)
+        // (Usamos los nuevos 'rayOrigin', 'directionToPlayer' y 'distanceToPlayer')
+        if (Physics.Raycast(rayOrigin, directionToPlayer, distanceToPlayer, obstacleLayerMask))
+        {
+            // Hay una pared (Obstacle) entre el enemigo y el jugador.
+            // No hacer NADA (ni rotar, ni disparar).
+
+            rayColor = Color.red; // (Para depuración)
+
+            // Dibuja el rayo de depuración (puedes borrar esto después)
+            Debug.DrawRay(rayOrigin, directionToPlayer * distanceToPlayer, rayColor);
+            return;
+        }
+
+        // Dibuja el rayo de depuración (puedes borrar esto después)
+        Debug.DrawRay(rayOrigin, directionToPlayer * distanceToPlayer, rayColor);
+
+        // --- SI AMBAS PRUEBAS PASAN, PROCEDER ---
+
+        // Lógica de Rotación (dependiente del tiempo)
+        Vector3 directionToLook = directionToPlayer; // Usamos la dirección del rayo
+        directionToLook.y = 0; // Ignorar altura para la rotación (para que no se incline)
+        Quaternion targetRotation = Quaternion.LookRotation(directionToLook);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+
+        // Lógica de Disparo (dependiente del tiempo)
         timer += Time.deltaTime;
 
         if (timer >= fireRate)
@@ -65,6 +107,7 @@ public class EnemyShooterDayan : MonoBehaviour
         }
     }
 
+
     void Shoot()
     {
         Vector3 spawnPos = transform.position + transform.forward;
@@ -73,7 +116,6 @@ public class EnemyShooterDayan : MonoBehaviour
         Rigidbody projRb = proj.GetComponent<Rigidbody>();
         if (projRb != null)
         {
-            // Ahora 'transform.forward' está apuntando (o intentando apuntar) al jugador
             projRb.linearVelocity = transform.forward * projectileSpeed;
         }
     }

@@ -99,7 +99,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7682290266552925437}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: bf821f46669dfd145a606227b4a9e162, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -152,4 +152,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 986b267e25d3f414fbdbae565634d40f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileDayan
-  maxBounces: 3
+  maxBounces: 10
+  maxLifeTime: 8

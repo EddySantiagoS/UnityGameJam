@@ -13,8 +13,16 @@ PrefabInstance:
       value: prop_wallPanel_C
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: fe34edcc8a1aeb54da22ee521344ea99, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: fe34edcc8a1aeb54da22ee521344ea99, type: 3}
       propertyPath: m_TagString
       value: Wall
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: fe34edcc8a1aeb54da22ee521344ea99, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: fe34edcc8a1aeb54da22ee521344ea99, type: 3}
       propertyPath: m_TagString

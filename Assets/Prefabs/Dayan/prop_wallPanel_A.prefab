@@ -13,6 +13,10 @@ PrefabInstance:
       value: prop_wallPanel_A
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 5159ecc6ca53bdc4cb9f53f767ea09a4, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 5159ecc6ca53bdc4cb9f53f767ea09a4, type: 3}
       propertyPath: m_TagString
       value: Wall
       objectReference: {fileID: 0}

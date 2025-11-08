@@ -28,6 +28,10 @@ public class LevelGeneratorDayan : MonoBehaviour
     [Tooltip("Distancia MÍNIMA (en celdas) entre el jugador y la meta")]
     public float minPlayerSafeZoneDistance = 5f;
 
+    // --- ¡AÑADE ESTA LÍNEA! ---
+    [Tooltip("Distancia mínima que debe haber entre un enemigo y el jugador AL APARECER (en metros)")]
+    public float minEnemyPlayerSpawnDistance = 4f;
+
     [Header("Configuración de Físicas (¡NUEVO!)")]
     [Tooltip("La capa que asignaste a tus prefabs de Muro")]
     public LayerMask wallLayerMask;
@@ -44,6 +48,7 @@ public class LevelGeneratorDayan : MonoBehaviour
     private Cell[,] grid;
     private Stack<Vector2Int> pathStack = new Stack<Vector2Int>();
     private Transform wallContainer;
+    private Transform enemyContainer;
     private Vector3 mazeOriginOffset;
 
     void Awake()
@@ -67,7 +72,13 @@ public class LevelGeneratorDayan : MonoBehaviour
         {
             Destroy(wallContainer.gameObject);
         }
-        ClearObjectsByTag("Enemy");
+
+        // --- ¡AÑADE ESTO! ---
+        if (enemyContainer != null)
+        {
+            Destroy(enemyContainer.gameObject);
+        }
+
         ClearObjectsByTag("Projectile");
         ClearObjectsByTag("SafeZone");
     }
@@ -85,6 +96,7 @@ public class LevelGeneratorDayan : MonoBehaviour
     void BuildEnvironment()
     {
         wallContainer = new GameObject("WallContainer").transform;
+        enemyContainer = new GameObject("EnemyContainer").transform;
         grid = new Cell[mazeWidth, mazeHeight];
         for (int x = 0; x < mazeWidth; x++)
         {
@@ -191,8 +203,13 @@ public class LevelGeneratorDayan : MonoBehaviour
 
 
     // --- 3. SPAWN DE ENTIDADES (LÓGICA ACTUALIZADA) ---
+
+    // --- 3. SPAWN DE ENTIDADES (LÓGICA ACTUALIZADA) ---
     void SpawnEntities()
     {
+        // NUEVO: Lista para rastrear dónde ya hemos puesto cosas
+        List<Vector3> occupiedPositions = new List<Vector3>();
+
         // A. Colocar la Zona Segura
         Vector3 safeZonePos = GetRandomSafePosition(safeZoneRadius);
         if (safeZonePos == Vector3.positiveInfinity)
@@ -201,6 +218,7 @@ public class LevelGeneratorDayan : MonoBehaviour
             return;
         }
         Instantiate(safeZonePrefab, safeZonePos, Quaternion.identity);
+        occupiedPositions.Add(safeZonePos); // <<< AÑADIDO
 
         // B. Mover al jugador
         Vector3 playerPos = GetRandomPlayerSpawnPosition(safeZonePos);
@@ -210,20 +228,67 @@ public class LevelGeneratorDayan : MonoBehaviour
             playerPos = mazeOriginOffset + Vector3.up; // Fallback al centro
         }
         player.transform.position = playerPos;
-        player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+        player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero; // Respeto tu uso de 'linearVelocity'
+        occupiedPositions.Add(playerPos); // <<< AÑADIDO
 
         // C. Colocar Enemigos
-        for (int i = 0; i < enemyCount; i++)
+        int enemiesToSpawn = enemyCount;
+        int spawnAttempts = 0; // Para evitar bucles infinitos si no hay espacio
+
+        // Usamos 'while' para RE-INTENTAR si un spawn falla
+        while (enemiesToSpawn > 0 && spawnAttempts < 100)
         {
+            spawnAttempts++; // Prevenir bucle infinito
+
             Vector3 enemyPos = GetRandomSafePosition(enemyRadius);
+
             if (enemyPos == Vector3.positiveInfinity)
             {
-                Debug.LogWarning("No se pudo encontrar espacio para un enemigo. Saltando...");
-                continue;
+                continue; // Esta celda no era válida (chocaba con pared)
             }
 
-            GameObject newEnemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
-            newEnemy.GetComponent<EnemyShooterDayan>().playerTarget = player;
+            // --- INICIO DE NUEVAS COMPROBACIONES ---
+            bool validSpawn = true;
+
+            // 1. (Tu Requisito) Comprobar distancia mínima con el JUGADOR
+            if (Vector3.Distance(enemyPos, playerPos) < minEnemyPlayerSpawnDistance)
+            {
+                validSpawn = false;
+            }
+
+            // 2. (Tu Requisito) Comprobar superposición con OTROS OBJETOS
+            if (validSpawn)
+            {
+                foreach (Vector3 pos in occupiedPositions)
+                {
+                    // Comprobamos si el radio del nuevo enemigo se solapa con el radio de otro objeto
+                    // (Usamos enemyRadius * 2 como una simple comprobación de "espacio personal")
+                    if (Vector3.Distance(enemyPos, pos) < (enemyRadius * 2))
+                    {
+                        validSpawn = false;
+                        break;
+                    }
+                }
+            }
+            // --- FIN DE NUEVAS COMPROBACIONES ---
+
+            // Si pasó ambas pruebas, lo instanciamos
+            if (validSpawn)
+            {
+                GameObject newEnemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
+                newEnemy.GetComponent<EnemyShooterDayan>().playerTarget = player;
+
+                newEnemy.transform.SetParent(enemyContainer);
+
+                occupiedPositions.Add(enemyPos); // <<< AÑADIDO (Lo marcamos como ocupado)
+                enemiesToSpawn--; // Un enemigo menos que spawnear
+            }
+            // Si validSpawn es falso, el bucle 'while' simplemente se repetirá y probará una nueva posición
+        }
+
+        if (enemiesToSpawn > 0)
+        {
+            Debug.LogWarning($"No se pudo encontrar espacio para {enemiesToSpawn} enemigos (demasiados enemigos o poco espacio).");
         }
     }
 

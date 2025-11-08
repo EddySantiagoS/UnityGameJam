@@ -159,9 +159,10 @@ MonoBehaviour:
   cellSize: 8
   enemyCount: 15
   minPlayerSafeZoneDistance: 15
+  minEnemyPlayerSpawnDistance: 3
   wallLayerMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 256
   playerRadius: 1
   enemyRadius: 1
   safeZoneRadius: 1
@@ -353,8 +354,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeManagerDayan
   player: {fileID: 1087710961}
-  targetTimeScale: 1
-  smoothSpeed: 5
+  targetTimeScale: 1.5
+  slowTimeScale: 0.1
+  transitionDuration: 0.3
 --- !u!1 &842891603
 GameObject:
   m_ObjectHideFlags: 0

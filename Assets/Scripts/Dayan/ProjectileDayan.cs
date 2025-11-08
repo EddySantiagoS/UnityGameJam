@@ -3,7 +3,14 @@ using UnityEngine;
 public class ProjectileDayan : MonoBehaviour
 {
     public int maxBounces = 3;
+    public float maxLifeTime = 8f;
     private int bounces = 0;
+
+    void Start()
+    {
+        // Se autodestruirá después de 'maxLifeTime' segundos
+        Destroy(gameObject, maxLifeTime);
+    }
 
     void OnCollisionEnter(Collision col)
     {
