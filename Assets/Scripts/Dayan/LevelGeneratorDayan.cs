@@ -6,27 +6,45 @@ public class LevelGeneratorDayan : MonoBehaviour
 {
     public static LevelGeneratorDayan Instance;
 
+    private struct Cell
+    {
+        public bool visited;
+        public bool wallLeft;
+        public bool wallBottom;
+    }
+
     [Header("Referencias de Prefabs")]
-    public GameObject wallPrefab;
+    public List<GameObject> wallPrefabs;
     public GameObject enemyPrefab;
     public GameObject safeZonePrefab;
 
-    [Header("Configuración del Nivel")]
-    [Tooltip("El objeto 'Ground' (Suelo) que define los límites del mapa")]
-    public Renderer groundRenderer; // Arrastra tu objeto 'Ground' aquí
-    public float spawnPadding = 2f; // Margen desde el borde del suelo
-    private Vector2 minBounds;
-    private Vector2 maxBounds;
-    public int enemyCount = 3;
-    public int obstacleCount = 5; // Obstáculos internos
+    [Header("Configuración del Laberinto")]
+    public int mazeWidth = 15;
+    public int mazeHeight = 15;
+    public float cellSize = 5f; // Aumentar esto sigue ayudando a tener pasillos más anchos
+
+    [Header("Configuración de Entidades")]
+    public int enemyCount = 5;
+    [Tooltip("Distancia MÍNIMA (en celdas) entre el jugador y la meta")]
+    public float minPlayerSafeZoneDistance = 5f;
+
+    [Header("Configuración de Físicas (¡NUEVO!)")]
+    [Tooltip("La capa que asignaste a tus prefabs de Muro")]
+    public LayerMask wallLayerMask;
+    [Tooltip("El radio (tamaño) de tu prefab de jugador")]
+    public float playerRadius = 0.5f;
+    [Tooltip("El radio (tamaño) de tu prefab de enemigo")]
+    public float enemyRadius = 0.5f;
+    [Tooltip("El radio (tamaño) de tu prefab de Zona Segura")]
+    public float safeZoneRadius = 2f;
 
     [Header("Referencias de Escena")]
-    public Transform player; // Arrastra al jugador aquí
+    public Transform player;
 
-    public float minPlayerSafeZoneDistance = 15f; // Distancia mínima entre jugador y meta
-
-    // Capas de físicas para comprobar colisiones
-    public LayerMask obstacleLayerMask;
+    private Cell[,] grid;
+    private Stack<Vector2Int> pathStack = new Stack<Vector2Int>();
+    private Transform wallContainer;
+    private Vector3 mazeOriginOffset;
 
     void Awake()
     {
@@ -34,46 +52,24 @@ public class LevelGeneratorDayan : MonoBehaviour
             Instance = this;
         else
             Destroy(gameObject);
-
-        // --- Calcular los límites basado en el tamaño del suelo ---
-        if (groundRenderer != null)
-        {
-            Bounds groundBounds = groundRenderer.bounds;
-            minBounds = new Vector2(groundBounds.min.x + spawnPadding, groundBounds.min.z + spawnPadding);
-            maxBounds = new Vector2(groundBounds.max.x - spawnPadding, groundBounds.max.z - spawnPadding);
-
-            Debug.Log($"Límites del mapa calculados: {minBounds} a {maxBounds}");
-        }
-        else
-        {
-            Debug.LogError("¡No se asignó un 'Ground Renderer' al LevelGenerator!");
-        }
     }
 
-    // --- Punto de Entrada Principal ---
     public void GenerateNewLevel()
     {
-        // 1. Limpiar el nivel anterior
         WipeLevel();
-
-        // 2. Construir el nuevo entorno
         BuildEnvironment();
-
-        // 3. Colocar entidades (Jugador, Meta, Enemigos)
         SpawnEntities();
     }
 
-    // --- 1. LIMPIEZA ---
     void WipeLevel()
     {
-        // Buscar todos los objetos con estos tags y destruirlos
+        if (wallContainer != null)
+        {
+            Destroy(wallContainer.gameObject);
+        }
         ClearObjectsByTag("Enemy");
         ClearObjectsByTag("Projectile");
-        ClearObjectsByTag("Wall");
-
-        // También destruimos la zona segura (si la etiquetamos)
-        GameObject safeZone = GameObject.FindGameObjectWithTag("SafeZone"); // Asegúrate de que el Prefab de SafeZone tenga este tag
-        if (safeZone != null) Destroy(safeZone);
+        ClearObjectsByTag("SafeZone");
     }
 
     void ClearObjectsByTag(string tag)
@@ -88,115 +84,231 @@ public class LevelGeneratorDayan : MonoBehaviour
     // --- 2. CONSTRUCCIÓN ---
     void BuildEnvironment()
     {
-        // A. Construir el perímetro exterior
-        // (Nota: Este bucle 'for' crea muchas paredes. Es funcional pero no muy optimizado. 
-        // Más adelante podríamos reemplazarlo instanciando 4 cubos escalados).
-        for (float x = minBounds.x; x <= maxBounds.x; x++)
+        wallContainer = new GameObject("WallContainer").transform;
+        grid = new Cell[mazeWidth, mazeHeight];
+        for (int x = 0; x < mazeWidth; x++)
         {
-            Instantiate(wallPrefab, new Vector3(x, 1, minBounds.y), Quaternion.identity); // Pared inferior
-            Instantiate(wallPrefab, new Vector3(x, 1, maxBounds.y), Quaternion.identity); // Pared superior
-        }
-        for (float z = minBounds.y + 1; z < maxBounds.y; z++)
-        {
-            Instantiate(wallPrefab, new Vector3(minBounds.x, 1, z), Quaternion.identity); // Pared izquierda
-            Instantiate(wallPrefab, new Vector3(maxBounds.x, 1, z), Quaternion.identity); // Pared derecha
+            for (int z = 0; z < mazeHeight; z++)
+            {
+                grid[x, z] = new Cell { visited = false, wallLeft = true, wallBottom = true };
+            }
         }
 
-        // B. Construir obstáculos internos
-        for (int i = 0; i < obstacleCount; i++)
+        pathStack.Clear();
+        Vector2Int startPos = new Vector2Int(Random.Range(0, mazeWidth), Random.Range(0, mazeHeight));
+        grid[startPos.x, startPos.y].visited = true;
+        pathStack.Push(startPos);
+
+        while (pathStack.Count > 0)
         {
-            Vector3 randomPos = GetRandomSafePosition(1f); // Pedir pos segura
-            if (randomPos != Vector3.positiveInfinity)
+            Vector2Int currentPos = pathStack.Peek();
+            List<Vector2Int> neighbors = GetUnvisitedNeighbors(currentPos);
+
+            if (neighbors.Count > 0)
             {
-                Instantiate(wallPrefab, randomPos, Quaternion.identity);
+                Vector2Int chosenNeighbor = neighbors[Random.Range(0, neighbors.Count)];
+                KnockDownWall(currentPos, chosenNeighbor);
+                grid[chosenNeighbor.x, chosenNeighbor.y].visited = true;
+                pathStack.Push(chosenNeighbor);
             }
+            else
+            {
+                pathStack.Pop();
+            }
+        }
+
+        InstantiateWalls();
+    }
+
+    List<Vector2Int> GetUnvisitedNeighbors(Vector2Int pos)
+    {
+        List<Vector2Int> neighbors = new List<Vector2Int>();
+        if (pos.y + 1 < mazeHeight && !grid[pos.x, pos.y + 1].visited) neighbors.Add(new Vector2Int(pos.x, pos.y + 1));
+        if (pos.y - 1 >= 0 && !grid[pos.x, pos.y - 1].visited) neighbors.Add(new Vector2Int(pos.x, pos.y - 1));
+        if (pos.x + 1 < mazeWidth && !grid[pos.x + 1, pos.y].visited) neighbors.Add(new Vector2Int(pos.x + 1, pos.y));
+        if (pos.x - 1 >= 0 && !grid[pos.x - 1, pos.y].visited) neighbors.Add(new Vector2Int(pos.x - 1, pos.y));
+        return neighbors;
+    }
+
+    void KnockDownWall(Vector2Int current, Vector2Int neighbor)
+    {
+        if (neighbor.x > current.x) grid[neighbor.x, neighbor.y].wallLeft = false;
+        else if (neighbor.x < current.x) grid[current.x, current.y].wallLeft = false;
+        else if (neighbor.y > current.y) grid[neighbor.x, neighbor.y].wallBottom = false;
+        else if (neighbor.y < current.y) grid[current.x, current.y].wallBottom = false;
+    }
+
+    void InstantiateWalls()
+    {
+        // Pone las paredes en Y=0
+        mazeOriginOffset = new Vector3(-(mazeWidth / 2f) * cellSize, 0, -(mazeHeight / 2f) * cellSize);
+
+        for (int x = 0; x < mazeWidth; x++)
+        {
+            for (int z = 0; z < mazeHeight; z++)
+            {
+                Vector3 cellWorldPos = mazeOriginOffset + new Vector3(x * cellSize, 0, z * cellSize);
+                Cell current = grid[x, z];
+
+                if (current.wallLeft)
+                {
+                    Vector3 pos = cellWorldPos + new Vector3(-cellSize / 2, 0, 0);
+                    InstantiateWall(pos, Quaternion.Euler(0, 90, 0));
+                }
+                if (current.wallBottom)
+                {
+                    Vector3 pos = cellWorldPos + new Vector3(0, 0, -cellSize / 2);
+                    InstantiateWall(pos, Quaternion.identity);
+                }
+            }
+        }
+
+        // Perímetro Exterior
+        for (int x = 0; x < mazeWidth; x++)
+        {
+            Vector3 pos = mazeOriginOffset + new Vector3(x * cellSize, 0, (mazeHeight - 1) * cellSize) + new Vector3(0, 0, cellSize / 2);
+            InstantiateWall(pos, Quaternion.identity);
+        }
+        for (int z = 0; z < mazeHeight; z++)
+        {
+            Vector3 pos = mazeOriginOffset + new Vector3((mazeWidth - 1) * cellSize, 0, z * cellSize) + new Vector3(cellSize / 2, 0, 0);
+            InstantiateWall(pos, Quaternion.Euler(0, 90, 0));
         }
     }
 
-    // --- 3. SPAWN DE ENTIDADES ---
+    void InstantiateWall(Vector3 position, Quaternion rotation)
+    {
+        if (wallPrefabs == null || wallPrefabs.Count == 0) return;
+        GameObject wallPrefab = wallPrefabs[Random.Range(0, wallPrefabs.Count)];
+        GameObject newWall = Instantiate(wallPrefab, position, rotation);
+
+        // ¡CRÍTICO! Asignar el tag para limpieza Y asignar la capa para físicas
+        newWall.tag = "Wall";
+        newWall.layer = LayerMask.NameToLayer("Wall"); // Asigna la capa por código
+
+        newWall.transform.SetParent(wallContainer);
+    }
+
+
+    // --- 3. SPAWN DE ENTIDADES (LÓGICA ACTUALIZADA) ---
     void SpawnEntities()
     {
-        // A. Colocar la Zona Segura PRIMERO
-        Vector3 safeZonePos = GetRandomSafePosition(2f);
+        // A. Colocar la Zona Segura
+        Vector3 safeZonePos = GetRandomSafePosition(safeZoneRadius);
         if (safeZonePos == Vector3.positiveInfinity)
         {
-            Debug.LogError("No se pudo encontrar posición para la SafeZone. Abortando spawn.");
+            Debug.LogError("¡No se encontró espacio para la SafeZone! Prueba un laberinto más grande o un 'safeZoneRadius' más pequeño.");
             return;
         }
         Instantiate(safeZonePrefab, safeZonePos, Quaternion.identity);
 
-        // B. Mover al jugador lejos de la zona segura
+        // B. Mover al jugador
         Vector3 playerPos = GetRandomPlayerSpawnPosition(safeZonePos);
+        if (playerPos == Vector3.positiveInfinity)
+        {
+            Debug.LogError("¡No se encontró espacio para el Jugador!");
+            playerPos = mazeOriginOffset + Vector3.up; // Fallback al centro
+        }
         player.transform.position = playerPos;
-        player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero; // Detenerlo
+        player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
 
         // C. Colocar Enemigos
         for (int i = 0; i < enemyCount; i++)
         {
-            Vector3 enemyPos = GetRandomSafePosition(1.5f);
-            if (enemyPos != Vector3.positiveInfinity)
+            Vector3 enemyPos = GetRandomSafePosition(enemyRadius);
+            if (enemyPos == Vector3.positiveInfinity)
             {
-                // Instanciamos y asignamos el target al jugador
-                GameObject newEnemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
-                newEnemy.GetComponent<EnemyShooterDayan>().playerTarget = player;
+                Debug.LogWarning("No se pudo encontrar espacio para un enemigo. Saltando...");
+                continue;
             }
+
+            GameObject newEnemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
+            newEnemy.GetComponent<EnemyShooterDayan>().playerTarget = player;
         }
     }
 
-    // --- FUNCIÓN DE AYUDA: Encontrar lugar para el jugador ---
-    Vector3 GetRandomPlayerSpawnPosition(Vector3 safeZonePos)
-    {
-        int attempts = 0;
-        while (attempts < 50)
-        {
-            // 1. Encontrar un punto vacío aleatorio (reusamos la función existente)
-            Vector3 randomPos = GetRandomSafePosition(1f); // 1f es el radio del jugador
+    // --- FUNCIÓN DE AYUDA (ACTUALIZADA) ---
+    // Encuentra una celda aleatoria donde un objeto con 'spawnRadius' quepa
 
-            if (randomPos != Vector3.positiveInfinity)
-            {
-                // 2. Comprobar la distancia a la zona segura
-                float distance = Vector3.Distance(randomPos, safeZonePos);
-
-                if (distance >= minPlayerSafeZoneDistance)
-                {
-                    // ¡Encontrado! Es un punto vacío Y está lejos
-                    return randomPos;
-                }
-            }
-
-            attempts++;
-        }
-
-        Debug.LogWarning("No se encontró posición lejana para el jugador. Colocando en el centro.");
-
-        // --- ¡LÍNEA CORREGIDA! ---
-        return Vector3.up; // Fallback al centro (0, 1, 0)
-    }
-
-
-    // --- FUNCIÓN DE AYUDA: Encontrar un lugar vacío ---
     Vector3 GetRandomSafePosition(float spawnRadius)
     {
         int attempts = 0;
-        while (attempts < 50) // Intentar 50 veces
+        while (attempts < 50) // Intentar 50 celdas
         {
-            // Elige un punto aleatorio dentro de los límites
-            float x = Random.Range(minBounds.x, maxBounds.x);
-            float z = Random.Range(minBounds.y, maxBounds.y);
-            Vector3 randomPos = new Vector3(x, 1, z); // Asumimos Y=1
+            int x = Random.Range(0, mazeWidth);
+            int z = Random.Range(0, mazeHeight);
 
-            // Comprobar si está vacío usando una esfera
-            // (Asegúrate de que obstacleLayerMask incluya "Obstacles" y "Player")
-            if (!Physics.CheckSphere(randomPos, spawnRadius, obstacleLayerMask))
+            // Posición central de la celda (en Y=1, sobre el suelo)
+            // --- ¡ESTA ES LA LÍNEA CORREGIDA! ---
+            Vector3 cellCenterPos = mazeOriginOffset + new Vector3(x * cellSize + (cellSize / 2f), 0, z * cellSize + (cellSize / 2f)) + Vector3.up;
+
+            // --- ¡LA COMPROBACIÓN FÍSICA! ---
+            // ¿Esta esfera de 'spawnRadius' choca con algo en la 'wallLayerMask'?
+            if (!Physics.CheckSphere(cellCenterPos, spawnRadius, wallLayerMask))
             {
-                // ¡Espacio libre! Devolver esta posición.
-                return randomPos;
+                // ¡No choca! Es un lugar seguro.
+                return cellCenterPos;
             }
 
             attempts++;
         }
 
-        Debug.LogWarning("No se encontró posición segura para instanciar.");
-        return Vector3.positiveInfinity; // Fallback
+        // No se encontró nada después de 50 intentos
+        return Vector3.positiveInfinity;
+    }
+
+    // --- FUNCIÓN DE AYUDA (ACTUALIZADA) ---
+    // --- FUNCIÓN DE AYUDA (ACTUALIZADA Y MÁS ROBUSTA) ---
+    Vector3 GetRandomPlayerSpawnPosition(Vector3 safeZonePos)
+    {
+        List<Vector3> validPositions = new List<Vector3>();
+        List<Vector3> distantPositions = new List<Vector3>();
+
+        // 1. Recorrer TODAS las celdas para encontrar TODAS las posiciones seguras
+        for (int x = 0; x < mazeWidth; x++)
+        {
+            for (int z = 0; z < mazeHeight; z++)
+            {
+                // ¡IMPORTANTE! Usar el centro de la celda (la corrección de nuestra conversación anterior)
+                Vector3 cellCenterPos = mazeOriginOffset + new Vector3(x * cellSize + (cellSize / 2f), 0, z * cellSize + (cellSize / 2f)) + Vector3.up;
+
+                // Comprobar si el JUGADOR cabe en esta celda
+                if (!Physics.CheckSphere(cellCenterPos, playerRadius, wallLayerMask))
+                {
+                    validPositions.Add(cellCenterPos);
+                }
+            }
+        }
+
+        // 2. Si no se encontró NINGÚN lugar seguro (laberinto imposible / radio del jugador muy grande)
+        if (validPositions.Count == 0)
+        {
+            Debug.LogError("¡No se encontró NINGÚN espacio para el Jugador en todo el laberinto! Revisa los radios o el tamaño del laberinto.");
+            return mazeOriginOffset + Vector3.up; // Fallback al centro
+        }
+
+        // 3. Filtrar la lista para encontrar posiciones LEJANAS
+        foreach (Vector3 pos in validPositions)
+        {
+            float cellDistance = Vector3.Distance(pos, safeZonePos) / cellSize;
+            if (cellDistance >= minPlayerSafeZoneDistance)
+            {
+                distantPositions.Add(pos);
+            }
+        }
+
+        // 4. Decidir qué posición devolver
+        if (distantPositions.Count > 0)
+        {
+            // ¡Éxito! Devolver una posición lejana aleatoria
+            return distantPositions[Random.Range(0, distantPositions.Count)];
+        }
+        else
+        {
+            // No se encontró nada lejano, pero sí lugares seguros.
+            // Esto es lo que causaba tu advertencia.
+            Debug.LogWarning("No se encontró posición lejana para el jugador (posiblemente laberinto pequeño). Colocando en una posición segura aleatoria...");
+            return validPositions[Random.Range(0, validPositions.Count)];
+        }
     }
 }
