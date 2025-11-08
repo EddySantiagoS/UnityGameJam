@@ -46,6 +46,7 @@ public class TimeManagerDayan : MonoBehaviour
             Time.unscaledDeltaTime      // ¡Crítico! Usar tiempo NO escalado
         );
         // --- ---
+        Time.timeScale = Mathf.Max(0f, Time.timeScale);
     }
 
     bool PlayerIsMoving()
