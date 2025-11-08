@@ -8,6 +8,8 @@ TagManager:
   - Projectile
   - Wall
   - SafeZone
+  - Muerte
+  - Meta
   layers:
   - Default
   - TransparentFX
