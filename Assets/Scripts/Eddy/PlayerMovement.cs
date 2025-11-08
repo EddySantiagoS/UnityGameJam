@@ -66,6 +66,17 @@ public class PlayerMovement : MonoBehaviour
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             jumpPressed = false;
+
+            // --- Detectar si hay un objeto bajo el jugador ---
+            RaycastHit hit;
+            if (Physics.Raycast(groundCheck.position, Vector3.down, out hit, 1f))
+            {
+                var rotator = hit.collider.GetComponent<RotateOnPlayerJump>();
+                if (rotator != null)
+                {
+                    rotator.RotateRandom();
+                }
+            }
         }
 
         // --- Gravedad ---
