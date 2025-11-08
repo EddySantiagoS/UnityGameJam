@@ -211,6 +211,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9500000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 2c23ec4ac987fcd48b931bc2931ef9bd, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -678,11 +682,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0589a36b717fccd4aa89dadbc7ee61c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  walkSpeed: 2
+  walkSpeed: 1.2
   sprintSpeed: 5
   jumpHeight: 2
   gravity: -9.81
-  mouseSensitivity: 10
+  mouseSensitivity: 100
   groundCheck: {fileID: 1332116990}
   groundDistance: 0.4
   groundMask:
@@ -712,7 +716,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1.05, z: 0.03}
+  m_Center: {x: 0, y: 1.2, z: 0.03}
 --- !u!4 &442030630 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 70f78be1e034af54790b7297093153f7, type: 3}

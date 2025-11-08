@@ -20,24 +20,26 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask groundMask;
 
     private CharacterController controller;
+    private Animator animator;
     private Vector3 velocity;
     private bool isGrounded;
+    private bool wasGrounded;
 
     private Vector2 moveInput;
-    private Vector2 lookInput;
     private bool isSprinting;
     private bool jumpPressed;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
         Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
         // Detección de suelo
-        bool wasGrounded = isGrounded;
+        wasGrounded = isGrounded;
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
         if (isGrounded && velocity.y < 0)
@@ -48,18 +50,29 @@ public class PlayerMovement : MonoBehaviour
         float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
         controller.Move(move * currentSpeed * Time.deltaTime);
 
-        // Salto (solo si estamos en el suelo Y justo se presionó el salto)
+        // --- Animaciones ---
+        // La animación se basa solo en la velocidad (caminar/correr)
+        float speedPercent = move.magnitude * (isSprinting ? 1f : 0.5f);
+        animator.SetFloat("Speed", speedPercent, 0.1f, Time.deltaTime);
+
+        // Pausar animación si está en el aire
+        if (!isGrounded)
+            animator.speed = 0f;
+        else
+            animator.speed = 1f;
+
+        // --- Salto ---
         if (jumpPressed && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            jumpPressed = false; // consumimos el salto aquí
+            jumpPressed = false;
         }
 
-        // Gravedad
+        // --- Gravedad ---
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
 
-        // Rotación con el mouse
+        // --- Rotación del personaje según la cámara ---
         Vector3 camForward = Camera.main.transform.forward;
         camForward.y = 0f;
         if (camForward.sqrMagnitude > 0.01f)
@@ -68,7 +81,7 @@ public class PlayerMovement : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 10f * Time.deltaTime);
         }
 
-        // Si estamos en el suelo y el jugador no está presionando salto, limpiar flag
+        // Reset de salto
         if (isGrounded && !wasGrounded)
             jumpPressed = false;
     }
@@ -81,7 +94,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void OnLook(InputAction.CallbackContext context)
     {
-        lookInput = context.ReadValue<Vector2>();
+        // Control de cámara separado
     }
 
     public void OnSprint(InputAction.CallbackContext context)
@@ -91,7 +104,6 @@ public class PlayerMovement : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        // Solo marcamos salto cuando se presiona (no mantenido)
         if (context.started && isGrounded)
             jumpPressed = true;
     }
