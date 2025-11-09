@@ -44,21 +44,22 @@ public class BoardGenerator : MonoBehaviour
     }
 
     void GenerateBoard()
-    {
-        tiles = new FloorTile[gridSize, gridSize];
-        float offset = (gridSize - 1) * spacing * 0.5f;
+{
+    tiles = new FloorTile[gridSize, gridSize];
+    float offset = (gridSize - 1) * spacing * 0.5f;
 
-        for (int x = 0; x < gridSize; x++)
+    for (int x = 0; x < gridSize; x++)
+    {
+        for (int z = 0; z < gridSize; z++)
         {
-            for (int z = 0; z < gridSize; z++)
-            {
-                Vector3 pos = new Vector3(x * spacing - offset, 0, z * spacing - offset);
-                GameObject tileGO = Instantiate(tilePrefab, pos, Quaternion.identity, transform);
-                tileGO.name = $"Tile_{x}_{z}";
-                tiles[x, z] = tileGO.GetComponent<FloorTile>();
-            }
+            Vector3 localPos = new Vector3(x * spacing - offset, 0, z * spacing - offset);
+            GameObject tileGO = Instantiate(tilePrefab, transform);
+            tileGO.transform.localPosition = localPos; // 👈 posición relativa al tablero
+            tileGO.name = $"Tile_{x}_{z}";
+            tiles[x, z] = tileGO.GetComponent<FloorTile>();
         }
     }
+}
 
     IEnumerator GameLoop()
     {
@@ -76,7 +77,7 @@ public class BoardGenerator : MonoBehaviour
             yield return new WaitForSeconds(1f);
 
             // 3️⃣ Mostrar fruta objetivo
-            targetFruit = possibleImages[Random.Range(0, possibleImages.Length)];
+           targetFruit = GetRandomFruitFromBoard();
             targetDisplay.SetTarget(targetFruit);
             if (infoText) infoText.text = " ¡Encuentra esta fruta!";
             yield return StartCoroutine(UpdateTimer(countdownTime));
@@ -101,11 +102,11 @@ public class BoardGenerator : MonoBehaviour
         while (t > 0)
         {
             if (timerText)
-                timerText.text = $"⏱️ Tiempo: {t:F1}s";
+                timerText.text = $"⏱ Tiempo: {t:F1}s";
             t -= Time.deltaTime;
             yield return null;
         }
-        if (timerText) timerText.text = "⌛ ¡Tiempo!";
+        if (timerText) timerText.text = " ¡Tiempo!";
     }
 
     void AssignImages()
@@ -140,4 +141,26 @@ public class BoardGenerator : MonoBehaviour
         foreach (var tile in tiles)
             tile.ResetTile();
     }
+
+    Texture GetRandomFruitFromBoard()
+{
+    // Guardamos todas las frutas actualmente en el tablero
+    System.Collections.Generic.List<Texture> used = new System.Collections.Generic.List<Texture>();
+
+    for (int x = 0; x < gridSize; x++)
+    {
+        for (int z = 0; z < gridSize; z++)
+        {
+            if (tiles[x, z].currentTexture != null)
+                used.Add(tiles[x, z].currentTexture);
+        }
+    }
+
+    // Devolvemos una fruta al azar de las que están presentes
+    if (used.Count > 0)
+        return used[Random.Range(0, used.Count)];
+
+    // Si por alguna razón no hay ninguna (no debería pasar)
+    return possibleImages[Random.Range(0, possibleImages.Length)];
+}
 }

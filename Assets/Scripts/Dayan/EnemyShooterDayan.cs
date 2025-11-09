@@ -13,14 +13,14 @@ public class EnemyShooterDayan : MonoBehaviour
     [Header("IA de Apuntado")]
     public float rotationSpeed = 5f;
 
-    // --- ¡NUEVAS VARIABLES! ---
+
     [Header("IA de Detección")]
     [Tooltip("Distancia máxima a la que el enemigo te detectará y disparará")]
     public float shootingRange = 20f;
 
     [Tooltip("La capa que contiene tus muros (para el Raycast)")]
     public LayerMask obstacleLayerMask;
-    // --- ---
+
 
     private float timer;
 
@@ -66,7 +66,7 @@ public class EnemyShooterDayan : MonoBehaviour
             return;
         }
 
-        // --- AÑADIR ESTA LÍNEA PARA DEPURACIÓN ---
+
         // Dibuja el rayo en la vista de Escena (¡muy útil!)
         // Verde si está en rango, Rojo si choca con algo
         Color rayColor = Color.green;
@@ -89,15 +89,12 @@ public class EnemyShooterDayan : MonoBehaviour
         // Dibuja el rayo de depuración (puedes borrar esto después)
         Debug.DrawRay(rayOrigin, directionToPlayer * distanceToPlayer, rayColor);
 
-        // --- SI AMBAS PRUEBAS PASAN, PROCEDER ---
-
-        // Lógica de Rotación (dependiente del tiempo)
-        Vector3 directionToLook = directionToPlayer; // Usamos la dirección del rayo
-        directionToLook.y = 0; // Ignorar altura para la rotación (para que no se incline)
+        Vector3 directionToLook = directionToPlayer; 
+        directionToLook.y = 0; 
         Quaternion targetRotation = Quaternion.LookRotation(directionToLook);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
 
-        // Lógica de Disparo (dependiente del tiempo)
+
         timer += Time.deltaTime;
 
         if (timer >= fireRate)
@@ -106,7 +103,6 @@ public class EnemyShooterDayan : MonoBehaviour
             Shoot();
         }
     }
-
 
     void Shoot()
     {

@@ -278,7 +278,7 @@ public class LevelGeneratorDayan : MonoBehaviour
             if (validSpawn)
             {
                 GameObject newEnemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
-                newEnemy.GetComponent<EnemyShooterDayan>().playerTarget = player;
+                //newEnemy.GetComponent<EnemyShooterDayan>().playerTarget = player;
 
                 newEnemy.transform.SetParent(enemyContainer);
 

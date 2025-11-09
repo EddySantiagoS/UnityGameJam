@@ -8,6 +8,7 @@ public class PlayerControllerDayan : MonoBehaviour
     [Header("Dash Básico")]
     public float dashDuration = 0.2f;
 
+
     [Header("Carga de Dash (Nuevo)")]
     public float forceMultiplier = 10f;
     public float minDashForce = 5f;
