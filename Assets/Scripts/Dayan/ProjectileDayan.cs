@@ -35,7 +35,7 @@ public class ProjectileDayan : MonoBehaviour
         if (col.gameObject.CompareTag("Player"))
         {
             // Llama al GameManager para reiniciar (Asumiendo que existe y funciona)
-            // GameManagerDayan.Instance.RestartWorld(); 
+            GameManagerDayan.Instance.RestartWorld(); 
             Destroy(gameObject); // Destruye el proyectil
             return;
         }

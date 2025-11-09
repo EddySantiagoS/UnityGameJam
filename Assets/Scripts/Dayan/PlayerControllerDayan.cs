@@ -51,10 +51,18 @@ public class PlayerControllerDayan : MonoBehaviour
 
     // --- SETUP ---
 
+    [Header("Audio de Choque")]
+    public AudioClip wallHitSound;
+
+    // Referencia al AudioSource del Jugador (puede ser el mismo que usa el Dash)
+    private AudioSource playerAudioSource;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         mainCamera = Camera.main;
+
+        playerAudioSource = GetComponent<AudioSource>();
 
         inputActions = new PlayerInputActions();
         inputActions.Player.MousePosition.performed += ctx => mouseScreenPosition = ctx.ReadValue<Vector2>();
@@ -104,6 +112,34 @@ public class PlayerControllerDayan : MonoBehaviour
 
         HandleRotations();
     }
+
+
+    void OnCollisionEnter(Collision collision)
+{
+    // Esta función se llama solo en el frame en el que la colisión INICIA.
+
+    // 1. Identificar el objeto impactado (el otro objeto en la colisión)
+    GameObject hitObject = collision.gameObject;
+    
+    // 2. Obtener la fuerza del impacto (magnitud de la velocidad relativa)
+    float impactForce = collision.relativeVelocity.magnitude;
+
+    // 3. Obtener el punto de contacto
+    Vector3 contactPoint = collision.contacts[0].point;
+
+    // --- Lógica Común ---
+
+    // a) Ejemplo: Comprobar la etiqueta del objeto impactado
+    if (hitObject.CompareTag("Wall"))
+    {
+        // El objeto (el que tiene este script) golpeó una pared.
+        Debug.Log("Choque con la pared con una fuerza de: " + impactForce);
+        
+        // Reproducir sonido de choque (si tienes el AudioSource)
+        // 
+    }
+
+}
 
     // --- ROTACIONES (Sin Cambios) ---
     private void HandleRotations()

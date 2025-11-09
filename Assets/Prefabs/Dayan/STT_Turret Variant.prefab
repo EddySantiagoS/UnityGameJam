@@ -77,12 +77,16 @@ PrefabInstance:
       value: -0.010818243
       objectReference: {fileID: 0}
     - target: {fileID: 82603800130370074, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
+      propertyPath: m_Resource
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 82603800130370074, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: MinDistance
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 82603800130370074, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: m_PlayOnAwake
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 135712686845337430, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: m_Radius
@@ -104,7 +108,8 @@ PrefabInstance:
       propertyPath: parameters.detectionRadius
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8136331921978009835, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
