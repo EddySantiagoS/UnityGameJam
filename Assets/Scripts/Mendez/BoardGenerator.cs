@@ -44,21 +44,22 @@ public class BoardGenerator : MonoBehaviour
     }
 
     void GenerateBoard()
-    {
-        tiles = new FloorTile[gridSize, gridSize];
-        float offset = (gridSize - 1) * spacing * 0.5f;
+{
+    tiles = new FloorTile[gridSize, gridSize];
+    float offset = (gridSize - 1) * spacing * 0.5f;
 
-        for (int x = 0; x < gridSize; x++)
+    for (int x = 0; x < gridSize; x++)
+    {
+        for (int z = 0; z < gridSize; z++)
         {
-            for (int z = 0; z < gridSize; z++)
-            {
-                Vector3 pos = new Vector3(x * spacing - offset, 0, z * spacing - offset);
-                GameObject tileGO = Instantiate(tilePrefab, pos, Quaternion.identity, transform);
-                tileGO.name = $"Tile_{x}_{z}";
-                tiles[x, z] = tileGO.GetComponent<FloorTile>();
-            }
+            Vector3 localPos = new Vector3(x * spacing - offset, 0, z * spacing - offset);
+            GameObject tileGO = Instantiate(tilePrefab, transform);
+            tileGO.transform.localPosition = localPos; // 👈 posición relativa al tablero
+            tileGO.name = $"Tile_{x}_{z}";
+            tiles[x, z] = tileGO.GetComponent<FloorTile>();
         }
     }
+}
 
     IEnumerator GameLoop()
     {
