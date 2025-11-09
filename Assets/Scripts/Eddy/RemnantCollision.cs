@@ -3,12 +3,12 @@ using UnityEngine.SceneManagement;
 
 public class RemnantCollision : MonoBehaviour
 {
-    [Tooltip("Nombre de la escena a cargar cuando el jugador toque este remanente")]
-    public string sceneToLoad = "NextScene"; // cámbialo por el nombre real
+    [Tooltip("Escena a la que se cargará al tocar un remanente")]
+    public string sceneToLoad = "Santiago"; // escena destino
 
     private void OnTriggerEnter(Collider other)
     {
-        // Puedes ajustar la comparación según el tag o el componente del jugador
+        // asegúrate de que tu jugador tenga el Tag "Player"
         if (other.CompareTag("Player"))
         {
             SceneManager.LoadScene(sceneToLoad);

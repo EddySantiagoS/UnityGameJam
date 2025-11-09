@@ -310,7 +310,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.31118965
+  m_Radius: 0.69
   m_Height: 2.121122
   m_Direction: 1
   m_Center: {x: 0, y: 1.0733006, z: 0.03551674}
@@ -326,4 +326,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba0b3a1967d7ff246a1e3b596716776a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RemnantCollision
-  sceneToLoad: NextScene
+  sceneToLoad: Santiago
