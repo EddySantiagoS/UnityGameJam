@@ -1742,7 +1742,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f23ee09b593fe846bd2268b49769239, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTrigger
-  sceneName: Santiago
+  sceneName: SampleScene
 --- !u!82 &1299065935
 AudioSource:
   m_ObjectHideFlags: 0
