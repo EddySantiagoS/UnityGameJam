@@ -145,7 +145,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
       propertyPath: m_TagString
-      value: Player
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 100302, guid: 70f78be1e034af54790b7297093153f7, type: 3}
       propertyPath: m_IsActive
@@ -236,6 +236,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7190149885219353622}
+    - targetCorrespondingSourceObject: {fileID: 100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3686950698795058388}
+    - targetCorrespondingSourceObject: {fileID: 100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4014178880505365571}
   m_SourcePrefab: {fileID: 100100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
 --- !u!4 &1288122801922321856 stripped
 Transform:
@@ -263,7 +269,7 @@ CharacterController:
     m_Bits: 0
   m_LayerOverridePriority: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Height: 2.1
   m_Radius: 0.3
@@ -285,3 +291,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeRemnant
   playbackSpeed: 1
+--- !u!136 &3686950698795058388
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1288122801922682964}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.31118965
+  m_Height: 2.121122
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.0733006, z: 0.03551674}
+--- !u!114 &4014178880505365571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1288122801922682964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba0b3a1967d7ff246a1e3b596716776a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RemnantCollision
+  sceneToLoad: NextScene

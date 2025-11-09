@@ -2664,8 +2664,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeRemnantManager
   remnantPrefab: {fileID: 1288122801922682964, guid: d8f53a1f9772a694ab3842253d749a17, type: 3}
-  spawnInterval: 6
+  minRemnants: 3
   maxRemnants: 10
+  spawnInterval: 6
+  areaCenter: {x: 0, y: 0, z: 0}
+  areaSize: {x: 64, y: 0, z: 62.9}
 --- !u!4 &2018050357
 Transform:
   m_ObjectHideFlags: 0
