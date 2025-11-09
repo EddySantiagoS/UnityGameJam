@@ -59,10 +59,12 @@ public class LevelGeneratorDayan : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void GenerateNewLevel()
+    public IEnumerator GenerateNewLevel()
     {
         WipeLevel();
         BuildEnvironment();
+
+        yield return new WaitForFixedUpdate();
         SpawnEntities();
     }
 
