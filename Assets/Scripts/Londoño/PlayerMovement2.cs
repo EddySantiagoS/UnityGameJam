@@ -7,7 +7,7 @@ public class PlayerMovement2 : MonoBehaviour
     [Header("Movimiento")]
     public float walkSpeed = 40f;
     public float sprintSpeed = 80f;
-    public float jumpHeight = 2f;
+    //public float jumpHeight = 2f;
 
     [Header("Gravedad Dinámica")]
     public float gravityNormal = -7f;   // gravedad normal
@@ -57,7 +57,7 @@ public class PlayerMovement2 : MonoBehaviour
 
     private Vector2 moveInput;
     private bool isSprinting;
-    private bool jumpPressed;
+    //private bool jumpPressed;
 
     // ======================================================
     // ENABLE / DISABLE
@@ -74,7 +74,7 @@ public class PlayerMovement2 : MonoBehaviour
         sprintAction.action.performed += OnSprint;
         sprintAction.action.canceled += OnSprint;
 
-        jumpAction.action.started += OnJump;
+      //  jumpAction.action.started += OnJump;
     }
 
     void OnDisable()
@@ -85,7 +85,7 @@ public class PlayerMovement2 : MonoBehaviour
         sprintAction.action.performed -= OnSprint;
         sprintAction.action.canceled -= OnSprint;
 
-        jumpAction.action.started -= OnJump;
+       // jumpAction.action.started -= OnJump;
 
         moveAction.action.Disable();
         sprintAction.action.Disable();
@@ -205,8 +205,8 @@ public class PlayerMovement2 : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 10f * Time.deltaTime);
         }
 
-        if (isGrounded && !wasGrounded)
-            jumpPressed = false;
+        //if (isGrounded && !wasGrounded)
+          //  jumpPressed = false;
 
         // =============================================
         // 9. ANIMACIONES
@@ -230,11 +230,11 @@ public class PlayerMovement2 : MonoBehaviour
         isSprinting = ctx.ReadValueAsButton();
     }
 
-    private void OnJump(InputAction.CallbackContext ctx)
-    {
-        if (ctx.started && isGrounded)
-            jumpPressed = true;
-    }
+   // private void OnJump(InputAction.CallbackContext ctx)
+    //{
+      //  if (ctx.started && isGrounded)
+        //    jumpPressed = true;
+//    }
 
     // ======================================================
     // RESET GENERAL (se usa en la muerte)
