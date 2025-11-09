@@ -102,11 +102,11 @@ public class BoardGenerator : MonoBehaviour
         while (t > 0)
         {
             if (timerText)
-                timerText.text = $"⏱️ Tiempo: {t:F1}s";
+                timerText.text = $"⏱ Tiempo: {t:F1}s";
             t -= Time.deltaTime;
             yield return null;
         }
-        if (timerText) timerText.text = "⌛ ¡Tiempo!";
+        if (timerText) timerText.text = " ¡Tiempo!";
     }
 
     void AssignImages()
