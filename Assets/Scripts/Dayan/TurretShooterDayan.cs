@@ -93,6 +93,16 @@ public class TurretShooterDayan : MonoBehaviour
         sphereCollider.isTrigger = true;
         sphereCollider.radius = parameters.detectionRadius; // Usamos el radio corregido
 
+        // Configuración del AudioSource (¡NUEVO!)
+        AudioSource audioSource = GetComponent<AudioSource>();
+        if (audioSource != null)
+        {
+            // Aseguramos que el AudioSource de la torreta se vea afectado por Time.timeScale
+            // El valor predeterminado es 'false', pero es mejor ser explícito.
+            audioSource.ignoreListenerPause = false;
+            audioSource.playOnAwake = false; // Buena práctica
+        }
+
         // Asignar el objetivo inicial (el jugador)
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
