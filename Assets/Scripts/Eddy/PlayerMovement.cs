@@ -5,6 +5,11 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Spawn Aleatorio")]
+    public bool useRandomSpawn = true;
+    public Vector3 spawnCenter = Vector3.zero;
+    public Vector3 spawnRange = new Vector3(10f, 0f, 10f);
+
     [Header("Movimiento")]
     public float walkSpeed = 5f;
     public float sprintSpeed = 9f;
@@ -34,6 +39,28 @@ public class PlayerMovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         Cursor.lockState = CursorLockMode.Locked;
+
+        if (useRandomSpawn)
+        {
+            Vector3 randomOffset = new Vector3(
+                Random.Range(-spawnRange.x, spawnRange.x),
+                Random.Range(-spawnRange.y, spawnRange.y),
+                Random.Range(-spawnRange.z, spawnRange.z)
+            );
+
+            Vector3 spawnPos = spawnCenter + randomOffset;
+
+            // Opcional: asegurarse de que esté sobre el suelo
+            RaycastHit hit;
+            if (Physics.Raycast(spawnPos + Vector3.up * 10f, Vector3.down, out hit, 20f))
+            {
+                spawnPos.y = hit.point.y + 0.5f; // justo sobre el suelo
+            }
+
+            controller.enabled = false; // importante antes de mover un CharacterController
+            transform.position = spawnPos;
+            controller.enabled = true;
+        }
     }
 
     void Update()

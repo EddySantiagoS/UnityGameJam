@@ -14,7 +14,7 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
+  m_Fog: 1
   m_FogColor: {r: 0.2392157, g: 0.26666668, b: 0.41176474, a: 1}
   m_FogMode: 3
   m_FogDensity: 0.1
@@ -318,6 +318,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 442030633}
+    - targetCorrespondingSourceObject: {fileID: 100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 442030635}
   m_SourcePrefab: {fileID: 100100000, guid: 70f78be1e034af54790b7297093153f7, type: 3}
 --- !u!1 &102613559
 GameObject:
@@ -1310,6 +1313,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0589a36b717fccd4aa89dadbc7ee61c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
+  useRandomSpawn: 1
+  spawnCenter: {x: 0, y: 0, z: 0}
+  spawnRange: {x: 10, y: 0, z: 10}
   walkSpeed: 1.2
   sprintSpeed: 5
   jumpHeight: 2
@@ -1511,6 +1517,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 9caa3d8a-6b2f-4e8e-8bad-6ede561bd9be
     m_ActionName: UI/TrackedDeviceOrientation
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 442030635}
+        m_TargetAssemblyTypeName: TimeFreezeOnJump, Assembly-CSharp
+        m_MethodName: OnFreeze
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 99ed98d0-c8b7-4346-b92e-7ec8f33651a6
+    m_ActionName: 'Player/Freeze[/Keyboard/space]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player
@@ -1530,6 +1552,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRecorder
   recordDuration: 10
   recordInterval: 0.1
+--- !u!114 &442030635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 442030626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c2cae971b88b544dbdf50b5d53d4853, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeFreezeOnJump
+  frozenTimeScale: 0
+  transitionSpeed: 5
 --- !u!1 &475041779 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4985344043960018771, guid: 212f287becdc21640ab4974d4a3fa892, type: 3}
@@ -3331,6 +3367,59 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!1 &1806174590
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1806174592}
+  - component: {fileID: 1806174591}
+  m_Layer: 0
+  m_Name: meteorSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1806174591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1806174590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee2e6fe1f20f3fc4e89cce489eeaa626, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MeteorSpawner
+  areaCenter: {x: 0, y: 0, z: 0}
+  areaSize: {x: 50, y: 0, z: 50}
+  spawnHeight: 40
+  meteorPrefab: {fileID: 2864727346220207238, guid: 81cfec7ad24554848a91729004c8b24e, type: 3}
+  spawnInterval: 1
+  maxMeteors: 20
+  fallTorque: 100
+  randomForce: 50
+  meteorLifetime: 8
+--- !u!4 &1806174592
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1806174590}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1815159365
 GameObject:
   m_ObjectHideFlags: 0
@@ -4165,3 +4254,4 @@ SceneRoots:
   - {fileID: 43180251}
   - {fileID: 329528121}
   - {fileID: 2018050357}
+  - {fileID: 1806174592}
