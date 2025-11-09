@@ -17,7 +17,7 @@ public class BoardGenerator : MonoBehaviour
     public TargetTileDisplay targetDisplay;
 
     [Header("Tiempos del juego")]
-    public float showTime = 3f;       // Tiempo mostrando frutas
+    public float showTime = 4f;       // Tiempo mostrando frutas
     public float countdownTime = 7f;  // Tiempo para que el jugador elija
     public float resetDelay = 2f;     // Tiempo antes de nueva ronda
 
@@ -30,7 +30,7 @@ public class BoardGenerator : MonoBehaviour
     void Start()
     {
         GenerateBoard();
-        if (infoText) infoText.text = "🚶 Acércate para comenzar...";
+        if (infoText) infoText.text = " Jump on any tile to start...";
         if (timerText) timerText.text = "";
     }
 
@@ -67,23 +67,23 @@ public class BoardGenerator : MonoBehaviour
         {
             // 1️⃣ Mostrar todas las frutas
             AssignImages();
-            if (infoText) infoText.text = " Memoriza las frutas...";
+            if (infoText) infoText.text = " Remember the fruits....";
             yield return StartCoroutine(UpdateTimer(showTime));
 
             // 2️⃣ Ocultar frutas
             HideAllTiles();
-            if (infoText) infoText.text = " Preparando fruta objetivo...";
+            if (infoText) infoText.text = " Preparing the target fruit...";
             if (timerText) timerText.text = "";
             yield return new WaitForSeconds(1f);
 
             // 3️⃣ Mostrar fruta objetivo
            targetFruit = GetRandomFruitFromBoard();
             targetDisplay.SetTarget(targetFruit);
-            if (infoText) infoText.text = " ¡Encuentra esta fruta!";
+            if (infoText) infoText.text = " Find this fruit!";
             yield return StartCoroutine(UpdateTimer(countdownTime));
 
             // 4️⃣ Revisar baldosas
-            if (infoText) infoText.text = " Revisando respuestas...";
+            if (infoText) infoText.text = " Reviewing answers...";
             if (timerText) timerText.text = "";
             CheckTiles();
 
@@ -91,7 +91,7 @@ public class BoardGenerator : MonoBehaviour
 
             // 5️⃣ Resetear tablero
             ResetTiles();
-            if (infoText) infoText.text = " Nueva ronda...";
+            if (infoText) infoText.text = " New round!...";
             yield return new WaitForSeconds(1f);
         }
     }
