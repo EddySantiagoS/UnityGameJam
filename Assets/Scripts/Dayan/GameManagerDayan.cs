@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManagerDayan : MonoBehaviour
 {
@@ -24,7 +25,7 @@ public class GameManagerDayan : MonoBehaviour
             levelGenerator = LevelGeneratorDayan.Instance;
         }
         // Genera el nivel inicial
-        levelGenerator.GenerateNewLevel();
+        StartCoroutine(levelGenerator.GenerateNewLevel());
     }
 
     public void RestartWorld()
@@ -44,6 +45,8 @@ public class GameManagerDayan : MonoBehaviour
         // Efecto visual (ej. un fade a negro) iría aquí
         yield return new WaitForSecondsRealtime(0.5f);
 
+        yield return StartCoroutine(levelGenerator.GenerateNewLevel());
+
         // ¡LA LÍNEA CLAVE! Llama al generador
         if (levelGenerator != null)
         {
@@ -52,5 +55,15 @@ public class GameManagerDayan : MonoBehaviour
 
         // El tiempo se reiniciará automáticamente cuando el jugador se mueva
         // (controlado por TimeManagerDayan)
+    }
+
+    public void LoadNextScene(string sceneName)
+    {
+        // 1. Reseteamos el tiempo a la normalidad
+        // (¡Crítico! si no, la nueva escena cargará en cámara lenta)
+        Time.timeScale = 1f;
+
+        // 2. Cargamos la nueva escena por su nombre
+        SceneManager.LoadScene(sceneName);
     }
 }

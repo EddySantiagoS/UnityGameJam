@@ -11,6 +11,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Dayan.unity
     guid: 76397f4c69f202d4985b700dfa3f3a17
+  - enabled: 1
+    path: Assets/Scenes/David.unity
+    guid: d067407f5bd20ca449064228a78a3d4d
+  - enabled: 1
+    path: Assets/Scenes/Eddy.unity
+    guid: 4f2633d9eb1a1f24794f8eca791685c5
+  - enabled: 1
+    path: Assets/Scenes/Juan.unity
+    guid: f0ea6a9d4c2569b48b64f12fa1c1d65d
+  - enabled: 1
+    path: Assets/Scenes/Santiago.unity
+    guid: 36566355a62837c44babb76ce2100643
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -2,48 +2,66 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(LineRenderer))] // Asegura que el LineRenderer esté
+[RequireComponent(typeof(LineRenderer))]
 public class PlayerControllerDayan : MonoBehaviour
 {
     [Header("Dash Básico")]
     public float dashDuration = 0.2f;
 
     [Header("Carga de Dash (Nuevo)")]
-    public float forceMultiplier = 10f; // Multiplica la distancia de arrastre
+    public float forceMultiplier = 10f;
     public float minDashForce = 5f;
     public float maxDashForce = 20f;
 
+    [Header("Dash Line (LineRenderer)")]
+    [Tooltip("La longitud que tendrá la línea de dash.")]
+    public float dashLineLength = 10f;
+
+    [Header("Punta de Flecha (¡NUEVO!)")]
+    [Tooltip("Arrastra aquí el Prefab de tu punta de flecha")]
+    public GameObject arrowHeadPrefab;
+    [Tooltip("Qué tan lejos del final de la línea se posiciona la punta (ajusta para que se vea bien)")]
+    public float arrowHeadOffset = -0.5f;
+
+    [Header("Efectos Visuales (¡NUEVO!)")]
+    [Tooltip("El Prefab del efecto de 'clic' que se instanciará")]
+    public GameObject clickEffectPrefab;
+    [Tooltip("La capa (Layer) que representa el suelo clickeable")]
+    public LayerMask groundLayerMask;
+
+    private GameObject currentClickEffect; // Para controlar el spam
+
+    // --- (Variables privadas sin cambios, excepto 'lineRenderer') ---
     private Rigidbody rb;
     private PlayerInputActions inputActions;
     private Vector2 mouseScreenPosition;
-
-    // Estado del jugador
+    private GameObject currentArrowHead; // La flecha instanciada
     private bool isDashing = false;
-    private bool isChargingDash = false; // NUEVO: true cuando mantienes presionado
-
-    // Componentes para el indicador
-    private LineRenderer lineRenderer;
+    private bool isChargingDash = false;
+    private LineRenderer lineRenderer; // Quitamos la variable duplicada 'dashLine'
     private Camera mainCamera;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        mainCamera = Camera.main; // Guardamos la cámara para eficiencia
+        mainCamera = Camera.main;
 
-        // --- Configuración del Input ---
         inputActions = new PlayerInputActions();
-
-        // Suscríbete a los eventos de mouse
         inputActions.Player.MousePosition.performed += ctx => mouseScreenPosition = ctx.ReadValue<Vector2>();
+        inputActions.Player.Dash.performed += OnDashPressed;
+        inputActions.Player.Dash.canceled += OnDashReleased;
 
-        // MODIFICADO: Suscribirse a PRESIONAR y SOLTAR
-        inputActions.Player.Dash.performed += OnDashPressed; // Se llama al presionar
-        inputActions.Player.Dash.canceled += OnDashReleased; // Se llama al soltar
-
-        // --- Configuración del LineRenderer ---
         lineRenderer = GetComponent<LineRenderer>();
-        lineRenderer.positionCount = 2; // Una línea simple (inicio y fin)
-        lineRenderer.enabled = false;   // Oculto por defecto
+        lineRenderer.positionCount = 2;
+        lineRenderer.enabled = false;
+
+        // --- ¡NUEVO! ---
+        if (arrowHeadPrefab != null)
+        {
+            currentArrowHead = Instantiate(arrowHeadPrefab);
+            currentArrowHead.SetActive(false);
+        }
+        // --- ---
     }
 
     void OnEnable()
@@ -56,106 +74,147 @@ public class PlayerControllerDayan : MonoBehaviour
         inputActions.Player.Disable();
     }
 
-    // NUEVO: Se llama CADA FRAME
     void Update()
     {
-        // Si estamos cargando el dash, dibuja la línea indicadora
         if (isChargingDash)
         {
             DrawChargeIndicator();
         }
     }
 
-    // NUEVO: Se llama al PRESIONAR el mouse
     private void OnDashPressed(InputAction.CallbackContext context)
     {
-        if (isDashing) return; // No se puede cargar si ya está en dash
+        if (isDashing) return;
 
         isChargingDash = true;
-        lineRenderer.enabled = true;
+
+        if (clickEffectPrefab != null)
+        {
+            Ray ray = mainCamera.ScreenPointToRay(mouseScreenPosition);
+
+            if (Physics.Raycast(ray, out RaycastHit hit, 200f, groundLayerMask))
+            {
+                if (currentClickEffect != null)
+                {
+                    Destroy(currentClickEffect);
+                }
+
+                // 1. Calculamos la posición correcta
+                Vector3 spawnPos = hit.point + (Vector3.up * 0.1f);
+
+                // 2. ¡Usamos 'spawnPos' aquí!
+                currentClickEffect = Instantiate(clickEffectPrefab, spawnPos, Quaternion.Euler(-90, 0, 0));
+            }
+        }
     }
 
-    // NUEVO: Se llama al SOLTAR el mouse
     private void OnDashReleased(InputAction.CallbackContext context)
     {
-        if (!isChargingDash) return; // Salió de un estado inválido
+        if (!isChargingDash) return;
 
         isChargingDash = false;
-        lineRenderer.enabled = false;
+        lineRenderer.enabled = false; // Ocultar línea
 
-        // Calcular dirección y fuerza
+        if (currentArrowHead != null)
+        {
+            currentArrowHead.SetActive(false);
+        }
+        // --- ---
+
+        //if (currentClickEffect != null)
+        //{
+        //    Destroy(currentClickEffect);
+        //    currentClickEffect = null;
+        //}
+
+        // Calcular dirección y fuerza (sin cambios)
         Vector3 mouseWorldPos = GetMouseWorldPosition();
-        if (mouseWorldPos == Vector3.positiveInfinity) return; // Fallo del Raycast
-
-        // Vector desde el jugador hasta el ratón
+        if (mouseWorldPos == Vector3.positiveInfinity) return;
         Vector3 dragVector = mouseWorldPos - transform.position;
-
-        // Dirección (plana, en XZ)
         Vector3 dashDirection = new Vector3(dragVector.x, 0, dragVector.z).normalized;
-
-        // Si la dirección es casi cero (clic sin arrastrar), cancela
         if (dashDirection == Vector3.zero) return;
-
-        // Fuerza (basada en la distancia de arrastre)
         float dragMagnitude = dragVector.magnitude;
         float dashForce = Mathf.Clamp(dragMagnitude * forceMultiplier, minDashForce, maxDashForce);
-
-        // Iniciar el Dash
         StartCoroutine(Dash(dashDirection, dashForce));
     }
 
-    // NUEVO: Dibuja la línea desde el jugador hasta el ratón
+    // --- ¡FUNCIÓN COMPLETAMENTE NUEVA! ---
+    // REEMPLAZA ESTA FUNCIÓN COMPLETA
     private void DrawChargeIndicator()
     {
         Vector3 mousePos = GetMouseWorldPosition();
         if (mousePos == Vector3.positiveInfinity) return;
 
-        lineRenderer.SetPosition(0, transform.position); // Inicio en el jugador
-
-        // Vector del jugador al ratón
+        // 1. Calcular el vector 2D (plano)
         Vector3 dragVector = mousePos - transform.position;
-        float dragDistance = dragVector.magnitude;
+        dragVector.y = 0; // Aplanar
+        Vector3 direction = dragVector.normalized;
+        float dragDistance = dragVector.magnitude; // Distancia real del arrastre
 
-        // Limita la longitud visual de la línea al dash máximo
-        float clampedDistance = Mathf.Min(dragDistance, maxDashForce / forceMultiplier);
-        Vector3 lineEnd = transform.position + (dragVector.normalized * clampedDistance);
+        // 2. Comprobar si estamos apuntando (evitar spam)
+        if (dragDistance < 0.1f)
+        {
+            lineRenderer.enabled = false;
+            if (currentArrowHead != null) currentArrowHead.SetActive(false);
+            return;
+        }
 
-        lineRenderer.SetPosition(1, lineEnd); // Fin en la posición del ratón (limitada)
+        // 3. Asegurarse de que todo esté visible
+        lineRenderer.enabled = true;
+        if (currentArrowHead != null) currentArrowHead.SetActive(true);
+
+        // 4. Calcular la longitud visual CLAMPED (Limitada)
+        // Esta es la lógica clave que refleja tu min/max dash force.
+        // (Usamos la lógica de tu OnDashReleased para que coincida)
+        float clampedDistance = Mathf.Clamp(
+            dragDistance,
+            minDashForce / forceMultiplier,
+            maxDashForce / forceMultiplier
+        );
+
+        // 5. Definir el punto final de la línea
+        Vector3 lineEnd = transform.position + (direction * clampedDistance);
+
+        // 6. Aplicar al LineRenderer (¡AHORA SE ESTIRA!)
+        lineRenderer.SetPosition(0, transform.position);
+        lineRenderer.SetPosition(1, lineEnd);
+
+        // 7. Aplicar a la punta de la flecha
+        if (currentArrowHead != null)
+        {
+            // Posicionamos la flecha en el punto final + offset
+            currentArrowHead.transform.position = lineEnd + (direction * arrowHeadOffset);
+
+            // Rotamos la flecha
+            currentArrowHead.transform.rotation = Quaternion.LookRotation(direction);
+        }
     }
 
-    // MODIFICADO: Ahora acepta dirección y fuerza
+
     IEnumerator Dash(Vector3 dir, float force)
     {
         isDashing = true;
         float startTime = Time.time;
-
         while (Time.time < startTime + dashDuration)
         {
             rb.linearVelocity = dir * force;
             yield return null;
         }
-
         rb.linearVelocity = Vector3.zero;
         isDashing = false;
     }
 
-    // MODIFICADO: Renombrada y optimizada
     Vector3 GetMouseWorldPosition()
     {
         Ray ray = mainCamera.ScreenPointToRay(mouseScreenPosition);
-
-        // Plano al nivel del jugador (Y=1)
         Plane groundPlane = new Plane(Vector3.up, transform.position);
-
         if (groundPlane.Raycast(ray, out float distance))
         {
             return ray.GetPoint(distance);
         }
-
-        return Vector3.positiveInfinity; // Indica un fallo
+        return Vector3.positiveInfinity;
     }
 
-    // Esta función no cambia, TimeManagerDayan la sigue usando
     public float GetVelocityMagnitude()
     {
         return rb.linearVelocity.magnitude;
