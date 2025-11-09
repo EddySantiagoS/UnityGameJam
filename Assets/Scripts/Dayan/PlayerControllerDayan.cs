@@ -16,11 +16,16 @@ public class PlayerControllerDayan : MonoBehaviour
     [Header("Visuales y Rotación")]
     public float headingRotationSpeed = 10f;
     [Tooltip("Capas que deben activar el sonido de choque (Muros, Suelo, etc.).")]
-    public LayerMask collisionLayersForHitSound; // Nueva variable pública
+    public LayerMask collisionLayersForHitSound;
 
     [Header("Audio Sources (Asignar en Inspector)")]
-    public AudioSource normalTimeAudioSource; // Dash (Ignore Listener Pause = True)
-    public AudioSource slowMoAudioSource;   // Choque (Ignore Listener Pause = False)
+    // Dash (Tiempo Normal): Ignore Listener Pause = True
+    public AudioSource normalTimeAudioSource;
+    // Choque (Tiempo Lento): Ignore Listener Pause = False
+    public AudioSource slowMoAudioSource;
+
+    [Header("Audio Clips")]
+    public AudioClip dashSound;
     public AudioClip wallHitSound;
 
     // --- VARIABLES DE DASH Y EFECTOS ---
@@ -55,7 +60,7 @@ public class PlayerControllerDayan : MonoBehaviour
     private Camera mainCamera;
     private Coroutine dashCoroutine;
 
-    // VARIABLES DE CÁLCULO DE DASH (Para corregir errores de contexto)
+    // VARIABLES DE CÁLCULO DE DASH
     private Vector3 lastDashDirection = Vector3.forward;
     private Vector3 calculatedDashDirection;
     private float calculatedDashForce;
@@ -65,7 +70,7 @@ public class PlayerControllerDayan : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         mainCamera = Camera.main;
 
-        // Ya no necesitamos GetComponent<AudioSource>() si usamos las referencias públicas.
+        // Las referencias de AudioSource se asignan desde el Inspector.
 
         inputActions = new PlayerInputActions();
         inputActions.Player.MousePosition.performed += ctx => mouseScreenPosition = ctx.ReadValue<Vector2>();
@@ -109,7 +114,7 @@ public class PlayerControllerDayan : MonoBehaviour
     {
         if (isChargingDash)
         {
-            DrawChargeIndicator(); // Corregido: Ahora existe
+            DrawChargeIndicator();
         }
 
         HandleRotations();
@@ -126,19 +131,17 @@ public class PlayerControllerDayan : MonoBehaviour
             // Usamos el AudioSource que se ralentiza (slowMoAudioSource)
             if (slowMoAudioSource != null && wallHitSound != null)
             {
-                float hitVolume = collision.relativeVelocity.magnitude * 0.05f;
+                // ***** LÍNEAS ELIMINADAS/MODIFICADAS *****
+                // Se elimina el cálculo de hitVolume basado en la velocidad.
 
-                // Solo reproducir si el impacto es significativo
-                if (hitVolume > 0.1f)
-                {
-                    hitVolume = Mathf.Clamp(hitVolume, 0.1f, 0.8f);
-                    slowMoAudioSource.PlayOneShot(wallHitSound, hitVolume);
-                }
+                // 2. Reproducir sonido a volumen CONSTANTE (1.0f)
+                // Se utiliza 1.0f para volumen constante máximo, asegurando que se escuche.
+                slowMoAudioSource.PlayOneShot(wallHitSound, 1.0f);
             }
         }
     }
 
-    // --- ROTACIONES (Solo calcula la dirección) ---
+    // --- ROTACIONES (Solo calcula la dirección, el VisualsFollower la aplica) ---
     private void HandleRotations()
     {
         if (rb == null) return;
@@ -163,7 +166,6 @@ public class PlayerControllerDayan : MonoBehaviour
                 }
             }
         }
-        // NOTA: La rotación visual la aplica el script VisualsFollowerDayan.cs
     }
 
 
@@ -241,6 +243,13 @@ public class PlayerControllerDayan : MonoBehaviour
         // 1. FASE DE DASH (Propulsión)
         isDashing = true;
 
+        // *** Reproducir sonido del Dash a velocidad normal ***
+        if (normalTimeAudioSource != null && dashSound != null)
+        {
+            normalTimeAudioSource.PlayOneShot(dashSound);
+        }
+        // ***************************************************
+
         float startTime = Time.time;
         while (Time.time < startTime + dashDuration)
         {
@@ -268,7 +277,7 @@ public class PlayerControllerDayan : MonoBehaviour
         }
     }
 
-    // --- AYUDAS (CORREGIDO: El método DrawChargeIndicator) ---
+    // --- AYUDAS (CORREGIDO: DrawChargeIndicator y Getters) ---
     private void DrawChargeIndicator()
     {
         Vector3 mousePos = GetMouseWorldPosition();
@@ -318,7 +327,7 @@ public class PlayerControllerDayan : MonoBehaviour
         return Vector3.positiveInfinity;
     }
 
-    // --- GETTER PARA ROTACIÓN VISUAL ---
+    // Getter para la rotación visual (usado por VisualsFollowerDayan.cs)
     public Vector3 GetLastDashDirection()
     {
         return lastDashDirection;

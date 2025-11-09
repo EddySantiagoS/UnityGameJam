@@ -102,7 +102,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 892762640448494205, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: parameters.ShootingDelay
-      value: 0.4
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 892762640448494205, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: parameters.detectionRadius
