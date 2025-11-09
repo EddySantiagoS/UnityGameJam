@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 860a66ca4259b384f9ec01b687f71c3c, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -1443,8 +1443,8 @@ MonoBehaviour:
   - {fileID: 5905646144563973795, guid: 0efb67ad250b1bb499eed05cb47a42e2, type: 3}
   enemyPrefab: {fileID: 1980822024644603526, guid: 99b66a70790260f4c8e509c643978e29, type: 3}
   safeZonePrefab: {fileID: 8604569926932812985, guid: 6f3ec1b8b6136f54ca8097b8e5fe3c06, type: 3}
-  mazeWidth: 10
-  mazeHeight: 10
+  mazeWidth: 9
+  mazeHeight: 9
   cellSize: 9
   enemyCount: 10
   minPlayerSafeZoneDistance: 6
@@ -1499,7 +1499,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Color: {r: 0.32145953, g: 0.36285144, b: 0.5698112, a: 0.9372549}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
@@ -2398,6 +2398,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 286117894}
+  - component: {fileID: 286117895}
   m_Layer: 0
   m_Name: VisualsContainer
   m_TagString: Untagged
@@ -2413,9 +2414,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 286117893}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 5.2200003, y: 1.8, z: 5.21}
+  m_LocalScale: {x: 2.8, y: 2.8, z: 2.8}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1497889569}
@@ -2423,8 +2424,23 @@ Transform:
   - {fileID: 749994835}
   - {fileID: 1156040823}
   - {fileID: 1747218378}
-  m_Father: {fileID: 1087710965}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &286117895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286117893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f9b1a6c72d4a7f4b98a81076b3a9a71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VisualsFollowerDayan
+  playerTarget: {fileID: 1087710965}
+  playerController: {fileID: 1087710961}
+  rotationSpeed: 15
 --- !u!1 &316052628
 GameObject:
   m_ObjectHideFlags: 0
@@ -2871,8 +2887,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControllerDayan
   slowMoDurationAfterDash: 0.5
   slowMoFactor: 0.2
-  visualsContainer: {fileID: 0}
   headingRotationSpeed: 10
+  collisionLayersForHitSound:
+    serializedVersion: 2
+    m_Bits: 0
+  normalTimeAudioSource: {fileID: 0}
+  slowMoAudioSource: {fileID: 0}
+  wallHitSound: {fileID: 0}
   dashDuration: 0.4
   forceMultiplier: 5
   minDashForce: 5
@@ -2884,7 +2905,6 @@ MonoBehaviour:
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 512
-  wallHitSound: {fileID: 0}
 --- !u!136 &332121826
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -6432,7 +6452,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: b09939d54861b46499fccd188c1790a8, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.206
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -8689,8 +8709,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControllerDayan
   slowMoDurationAfterDash: 0.5
   slowMoFactor: 0.2
-  visualsContainer: {fileID: 286117894}
   headingRotationSpeed: 5
+  collisionLayersForHitSound:
+    serializedVersion: 2
+    m_Bits: 0
+  normalTimeAudioSource: {fileID: 0}
+  slowMoAudioSource: {fileID: 0}
+  wallHitSound: {fileID: 8300000, guid: a8666405e4f4e9d438c07c17c0ef5896, type: 3}
   dashDuration: 0.4
   forceMultiplier: 5
   minDashForce: 5
@@ -8702,7 +8727,6 @@ MonoBehaviour:
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 512
-  wallHitSound: {fileID: 8300000, guid: a8666405e4f4e9d438c07c17c0ef5896, type: 3}
 --- !u!23 &1087710963
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8771,8 +8795,7 @@ Transform:
   m_LocalPosition: {x: 5.2200003, y: 1.8, z: 5.21}
   m_LocalScale: {x: 2.8, y: 2.8, z: 2.8}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 286117894}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!120 &1087710966
@@ -16385,6 +16408,7 @@ SceneRoots:
   - {fileID: 2002781870}
   - {fileID: 1509220052}
   - {fileID: 1087710965}
+  - {fileID: 286117894}
   - {fileID: 1129532248}
   - {fileID: 842891606}
   - {fileID: 981436755}

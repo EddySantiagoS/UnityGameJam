@@ -12,10 +12,16 @@ public class PlayerControllerDayan : MonoBehaviour
     [Tooltip("El factor de tiempo (e.g., 0.2 = 20% de velocidad).")]
     public float slowMoFactor = 0.2f;
 
-    // --- VARIABLES DE ROTACIÓN ---
+    // --- ROTACIÓN & AUDIO ---
     [Header("Visuales y Rotación")]
-    public Transform visualsContainer;
     public float headingRotationSpeed = 10f;
+    [Tooltip("Capas que deben activar el sonido de choque (Muros, Suelo, etc.).")]
+    public LayerMask collisionLayersForHitSound; // Nueva variable pública
+
+    [Header("Audio Sources (Asignar en Inspector)")]
+    public AudioSource normalTimeAudioSource; // Dash (Ignore Listener Pause = True)
+    public AudioSource slowMoAudioSource;   // Choque (Ignore Listener Pause = False)
+    public AudioClip wallHitSound;
 
     // --- VARIABLES DE DASH Y EFECTOS ---
     [Header("Dash Básico")]
@@ -37,7 +43,7 @@ public class PlayerControllerDayan : MonoBehaviour
     public GameObject clickEffectPrefab;
     public LayerMask groundLayerMask;
 
-    // --- VARIABLES PRIVADAS ---
+    // --- VARIABLES PRIVADAS Y DE ESTADO ---
     private Rigidbody rb;
     private PlayerInputActions inputActions;
     private Vector2 mouseScreenPosition;
@@ -47,22 +53,19 @@ public class PlayerControllerDayan : MonoBehaviour
     private bool isChargingDash = false;
     private LineRenderer lineRenderer;
     private Camera mainCamera;
+    private Coroutine dashCoroutine;
+
+    // VARIABLES DE CÁLCULO DE DASH (Para corregir errores de contexto)
     private Vector3 lastDashDirection = Vector3.forward;
-
-    // --- SETUP ---
-
-    [Header("Audio de Choque")]
-    public AudioClip wallHitSound;
-
-    // Referencia al AudioSource del Jugador (puede ser el mismo que usa el Dash)
-    private AudioSource playerAudioSource;
+    private Vector3 calculatedDashDirection;
+    private float calculatedDashForce;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         mainCamera = Camera.main;
 
-        playerAudioSource = GetComponent<AudioSource>();
+        // Ya no necesitamos GetComponent<AudioSource>() si usamos las referencias públicas.
 
         inputActions = new PlayerInputActions();
         inputActions.Player.MousePosition.performed += ctx => mouseScreenPosition = ctx.ReadValue<Vector2>();
@@ -82,7 +85,6 @@ public class PlayerControllerDayan : MonoBehaviour
 
     void Start()
     {
-        // En lugar de Time.timeScale = slowMoFactor;
         if (TimeManagerDayan.Instance != null)
         {
             TimeManagerDayan.Instance.SetTimeScaleSmooth(slowMoFactor);
@@ -107,44 +109,39 @@ public class PlayerControllerDayan : MonoBehaviour
     {
         if (isChargingDash)
         {
-            DrawChargeIndicator();
+            DrawChargeIndicator(); // Corregido: Ahora existe
         }
 
         HandleRotations();
     }
 
-
+    // --- LÓGICA DE CHOQUE Y SONIDO (CORREGIDO) ---
     void OnCollisionEnter(Collision collision)
-{
-    // Esta función se llama solo en el frame en el que la colisión INICIA.
-
-    // 1. Identificar el objeto impactado (el otro objeto en la colisión)
-    GameObject hitObject = collision.gameObject;
-    
-    // 2. Obtener la fuerza del impacto (magnitud de la velocidad relativa)
-    float impactForce = collision.relativeVelocity.magnitude;
-
-    // 3. Obtener el punto de contacto
-    Vector3 contactPoint = collision.contacts[0].point;
-
-    // --- Lógica Común ---
-
-    // a) Ejemplo: Comprobar la etiqueta del objeto impactado
-    if (hitObject.CompareTag("Wall"))
     {
-        // El objeto (el que tiene este script) golpeó una pared.
-        Debug.Log("Choque con la pared con una fuerza de: " + impactForce);
-        
-        // Reproducir sonido de choque (si tienes el AudioSource)
-        // 
+        // 1. Comprobar si golpea una superficie de choque (Muro, Suelo, etc.)
+        bool isWallOrGround = ((1 << collision.gameObject.layer) & collisionLayersForHitSound) != 0;
+
+        if (isWallOrGround)
+        {
+            // Usamos el AudioSource que se ralentiza (slowMoAudioSource)
+            if (slowMoAudioSource != null && wallHitSound != null)
+            {
+                float hitVolume = collision.relativeVelocity.magnitude * 0.05f;
+
+                // Solo reproducir si el impacto es significativo
+                if (hitVolume > 0.1f)
+                {
+                    hitVolume = Mathf.Clamp(hitVolume, 0.1f, 0.8f);
+                    slowMoAudioSource.PlayOneShot(wallHitSound, hitVolume);
+                }
+            }
+        }
     }
 
-}
-
-    // --- ROTACIONES (Sin Cambios) ---
+    // --- ROTACIONES (Solo calcula la dirección) ---
     private void HandleRotations()
     {
-        if (rb == null || visualsContainer == null) return;
+        if (rb == null) return;
 
         Vector3 currentVelocity = rb.linearVelocity;
         currentVelocity.y = 0;
@@ -166,27 +163,24 @@ public class PlayerControllerDayan : MonoBehaviour
                 }
             }
         }
-
-        if (lastDashDirection != Vector3.zero)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(lastDashDirection);
-            visualsContainer.rotation = Quaternion.Slerp(
-                visualsContainer.rotation,
-                targetRotation,
-                headingRotationSpeed * Time.deltaTime
-            );
-        }
+        // NOTA: La rotación visual la aplica el script VisualsFollowerDayan.cs
     }
 
-    // --- EVENTOS DE INPUT ---
+
+    // --- EVENTOS DE INPUT (CORREGIDOS) ---
     private void OnDashPressed(InputAction.CallbackContext context)
     {
-        if (isDashing) return;
+        // CORRECCIÓN 1: Detenemos cualquier Dash/Gracia en curso para permitir el re-click rápido.
+        if (dashCoroutine != null)
+        {
+            StopCoroutine(dashCoroutine);
+            isDashing = false;
+            dashCoroutine = null;
+        }
 
         isChargingDash = true;
 
-        // 1. ACTIVACIÓN: El tiempo se vuelve normal (1f) durante la carga y el Dash.
-        // Usamos el TimeManager para una transición suave.
+        // ACTIVACIÓN: El tiempo se vuelve normal (1f) durante la carga.
         if (TimeManagerDayan.Instance != null)
         {
             TimeManagerDayan.Instance.SetTimeScaleSmooth(1f);
@@ -220,19 +214,29 @@ public class PlayerControllerDayan : MonoBehaviour
         if (mouseWorldPos == Vector3.positiveInfinity) return;
 
         Vector3 dragVector = mouseWorldPos - transform.position;
-        Vector3 dashDirection = new Vector3(dragVector.x, 0, dragVector.z).normalized;
-        if (dashDirection == Vector3.zero) return;
 
-        lastDashDirection = dashDirection;
+        // CORRECCIÓN 2: Almacenamos la dirección y fuerza en variables de clase
+        calculatedDashDirection = new Vector3(dragVector.x, 0, dragVector.z).normalized;
+
+        if (calculatedDashDirection == Vector3.zero) return;
+
+        lastDashDirection = calculatedDashDirection;
 
         float dragMagnitude = dragVector.magnitude;
-        float dashForce = Mathf.Clamp(dragMagnitude * forceMultiplier, minDashForce, maxDashForce);
-        StartCoroutine(Dash(dashDirection, dashForce));
+        calculatedDashForce = Mathf.Clamp(dragMagnitude * forceMultiplier, minDashForce, maxDashForce);
+
+        dashCoroutine = StartCoroutine(DashFlow(calculatedDashDirection, calculatedDashForce));
     }
 
     // --- CORUTINAS DE MECÁNICA ---
+    IEnumerator DashFlow(Vector3 dir, float force)
+    {
+        // Esto gestiona la referencia de la corrutina.
+        yield return StartCoroutine(DashExecution(dir, force));
+        dashCoroutine = null;
+    }
 
-    IEnumerator Dash(Vector3 dir, float force)
+    IEnumerator DashExecution(Vector3 dir, float force)
     {
         // 1. FASE DE DASH (Propulsión)
         isDashing = true;
@@ -244,13 +248,12 @@ public class PlayerControllerDayan : MonoBehaviour
             yield return null;
         }
 
-        // 2. FINAL DEL DASH Y GRACIA: Mantenemos el tiempo en 1f (Normal).
+        // 2. FINAL DEL DASH Y GRACIA
         rb.linearVelocity = Vector3.zero;
         isDashing = false;
 
         if (slowMoDurationAfterDash > 0)
         {
-            // Esperar el periodo de gracia en tiempo normal
             yield return new WaitForSecondsRealtime(slowMoDurationAfterDash);
 
             // 3. VUELTA AL ESTADO POR DEFECTO: SLOW MOTION
@@ -265,8 +268,7 @@ public class PlayerControllerDayan : MonoBehaviour
         }
     }
 
-    // --- AYUDAS (Sin Cambios) ---
-
+    // --- AYUDAS (CORREGIDO: El método DrawChargeIndicator) ---
     private void DrawChargeIndicator()
     {
         Vector3 mousePos = GetMouseWorldPosition();
@@ -314,6 +316,12 @@ public class PlayerControllerDayan : MonoBehaviour
             return ray.GetPoint(distance);
         }
         return Vector3.positiveInfinity;
+    }
+
+    // --- GETTER PARA ROTACIÓN VISUAL ---
+    public Vector3 GetLastDashDirection()
+    {
+        return lastDashDirection;
     }
 
     public float GetVelocityMagnitude()

@@ -98,11 +98,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 892762640448494205, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: parameters.power
-      value: 20
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 892762640448494205, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: parameters.ShootingDelay
-      value: 0.2
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 892762640448494205, guid: 2fafc82d17757493ca36f1cfb64b683d, type: 3}
       propertyPath: parameters.detectionRadius
