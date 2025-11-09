@@ -1570,6 +1570,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1180593521}
     - target: {fileID: 6145160772950444319, guid: 7976df01bbf5ee945a617ec795f1d262, type: 3}
+      propertyPath: winSceneName
+      value: David
+      objectReference: {fileID: 0}
+    - target: {fileID: 6145160772950444319, guid: 7976df01bbf5ee945a617ec795f1d262, type: 3}
       propertyPath: fallLoopSound
       value: 
       objectReference: {fileID: 8300000, guid: e4852a324885b9d469a5b5d8edb9e338, type: 3}
